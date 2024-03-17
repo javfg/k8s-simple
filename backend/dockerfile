@@ -1,0 +1,20 @@
+# Use the Go base image
+FROM golang:latest
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the Go module files
+COPY go.mod go.sum ./
+
+# Download the Go module dependencies
+RUN go mod download
+
+# Copy the main Go file
+COPY main.go .
+
+# Build the Go application
+RUN go build -o main .
+
+# Set the command to run the application
+CMD ["./main"]
