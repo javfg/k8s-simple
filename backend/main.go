@@ -21,32 +21,47 @@ type Response struct {
 	} `json:"info"`
 }
 
+// Config represents the configuration of the application.
+type Config struct {
+	Host       string
+	DBHost     string
+	DBUsername string
+	DBPassword string
+}
+
 func main() {
-	http.HandleFunc("/hi", func(w http.ResponseWriter, r *http.Request) {
+	c := Config{
+		Host:       os.Getenv("HOSTNAME"),
+		DBHost:     os.Getenv("DB_HOST"),
+		DBUsername: os.Getenv("POSTGRES_USER"),
+		DBPassword: os.Getenv("POSTGRES_PASSWORD"),
+	}
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Set CORS headers
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Connection, Keep-Alive")
 
 		// Handle the request
-		handleHi(w, r)
+		handleHi(w, r, c)
 	})
-	fmt.Println("Server is running on port 8080")
+
+	fmt.Printf("Server is running on port 8080, env vars: %+v\n", c)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func handleHi(w http.ResponseWriter, r *http.Request) {
+func handleHi(w http.ResponseWriter, r *http.Request, c Config) {
 	// Handle OPTIONS requests
 	if r.Method == "OPTIONS" {
-		fmt.Println("OPTIONS /hi")
+		fmt.Println("OPTIONS")
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
 	ctx := r.Context()
 
-	dbString := queryDBString(ctx)
-	hostname := os.Getenv("HOSTNAME")
+	dbString := queryDBString(ctx, c)
 
 	response := Response{
 		Message: "OK",
@@ -55,11 +70,11 @@ func handleHi(w http.ResponseWriter, r *http.Request) {
 			Hostname string `json:"hostname"`
 		}{
 			DBString: dbString,
-			Hostname: hostname,
+			Hostname: c.Host,
 		},
 	}
 
-	fmt.Println("GET /hi")
+	fmt.Println("GET")
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -70,10 +85,8 @@ func handleHi(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonResponse)
 }
 
-func queryDBString(ctx context.Context) string {
-	username := os.Getenv("POSTGRES_USER")
-	password := os.Getenv("POSTGRES_PASSWORD")
-	conn, err := pgx.Connect(ctx, fmt.Sprintf("postgresql://%s:%s@db:5432/mydb", username, password))
+func queryDBString(ctx context.Context, c Config) string {
+	conn, err := pgx.Connect(ctx, fmt.Sprintf("postgresql://%s:%s@%s:5432/mydb", c.DBUsername, c.DBPassword, c.DBHost))
 
 	if err != nil {
 		log.Fatal(err)

@@ -6,11 +6,19 @@ const stopButton = document.getElementById('btn-stop');
 const textArea = document.getElementById('text-area');
 
 async function doQuery() {
-  const res = await fetch('http://localhost:8080/hi', {
+  const backendURL = document.getElementById('backend-url').value;
+  const headers = {
+    'Content-Type': 'application/json',
+    Connection: 'close',
+    'Keep-Alive': 'timeout=1, max=4',
+  };
+
+  console.log('fetching from', backendURL, 'with headers', headers);
+
+  const res = await fetch(backendURL, {
+    cache: 'no-cache',
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
   });
 
   const data = await res.json();

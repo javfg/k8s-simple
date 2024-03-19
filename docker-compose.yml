@@ -11,8 +11,10 @@ services:
 
   backend:
     build: ./backend
+    image: javfg/k8s-simple-backend:latest
     environment:
       - HOSTNAME=${HOSTNAME}
+      - DB_HOST=db
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     ports:
