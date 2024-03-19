@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-init-script
+data:
+  init.sql: |
+    CREATE TABLE mytable (
+      message VARCHAR(255)
+    );
+
+    INSERT INTO mytable (message)
+    VALUES ('This is a sample message');
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: env-vars
+data:
+  DB_HOST: db-service
+  POSTGRES_DB: mydb

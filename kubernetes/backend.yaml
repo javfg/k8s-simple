@@ -17,16 +17,13 @@ spec:
         image: javfg/k8s-simple-backend:latest
         ports:
           - containerPort: 8080
-        env:
-          - name: DB_HOST
-            value: db-service
-          - name: POSTGRES_USER
-            value: postgres
-          - name: POSTGRES_PASSWORD
-            value: postgres
-          - name: POSTGRES_DB
-            value: mydb
+        envFrom:
+          - configMapRef:
+              name: env-vars
+          - secretRef:
+              name: db-secret
         imagePullPolicy: Always
+
 ---
 
 apiVersion: v1
@@ -34,7 +31,7 @@ kind: Service
 metadata:
   name: backend-service
 spec:
-  type: LoadBalancer
+  # type: LoadBalancer
   ports:
     - port: 8080
       targetPort: 8080

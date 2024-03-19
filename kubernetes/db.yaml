@@ -32,15 +32,11 @@ spec:
           image: postgres:latest
           ports:
             - containerPort: 5432
-          env:
-            - name: DB_HOST
-              value: db-service
-            - name: POSTGRES_USER
-              value: postgres
-            - name: POSTGRES_PASSWORD
-              value: postgres
-            - name: POSTGRES_DB
-              value: mydb
+          envFrom:
+            - configMapRef:
+                name: env-vars
+            - secretRef:
+                name: db-secret
           volumeMounts:
             - name: db-volume
               mountPath: /docker-entrypoint-initdb.d
