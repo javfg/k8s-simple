@@ -1,5 +1,5 @@
 # Use the Go base image
-FROM --platform=linux/arm64/v8 golang:latest
+FROM golang:latest
 
 # Set the working directory inside the container
 WORKDIR /app
