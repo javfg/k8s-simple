@@ -31,8 +31,11 @@ kind: Service
 metadata:
   name: backend-service
 spec:
+  type: LoadBalancer
   ports:
-    - port: 8080
+    - protocol: TCP
+      port: 8080
       targetPort: 8080
+      name: web
   selector:
     app: backend
