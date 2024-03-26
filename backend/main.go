@@ -10,6 +10,9 @@ import (
 	"os"
 
 	"github.com/jackc/pgx/v4"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // Info represents the contents of a response.
@@ -32,6 +35,23 @@ type Config struct {
 	DBPassword string
 }
 
+var (
+	requestsTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "backend_requests_total",
+		Help: "Total number of requests to the backend",
+	})
+
+	requestsGet = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "backend_requests_get",
+		Help: "Total number of GET requests to the backend",
+	})
+
+	requestsOptions = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "backend_requests_options",
+		Help: "Total number of OPTIONS requests to the backend",
+	})
+)
+
 func main() {
 	c := Config{
 		Host:       os.Getenv("HOSTNAME"),
@@ -50,18 +70,24 @@ func main() {
 		handleHi(w, r, c)
 	})
 
+	http.Handle("/metrics", promhttp.Handler())
+
 	fmt.Printf("Server is running on port 8080, env vars: %+v\n", c)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func handleHi(w http.ResponseWriter, r *http.Request, c Config) {
 	log.Printf("%s - %s: %s\n", r.Method, r.RemoteAddr, r.URL.Path)
+	requestsTotal.Inc()
 
 	// Handle OPTIONS requests
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
+		requestsOptions.Inc()
 		return
 	}
+
+	requestsGet.Inc()
 
 	ctx := r.Context()
 	dbString := queryDBString(ctx, c)
