@@ -3,8 +3,6 @@ kind: Deployment
 metadata:
   name: prometheus
   namespace: monitoring
-  labels:
-    app: prometheus
 spec:
   replicas: 1
   selector:
@@ -17,7 +15,6 @@ spec:
     spec:
       serviceAccountName: prometheus
       containers:
-
         - name: prometheus-server-configmap-reload
           image: "quay.io/prometheus-operator/prometheus-config-reloader:v0.73.0"
           args:
@@ -27,7 +24,6 @@ spec:
             - name: config
               mountPath: /etc/config
               readOnly: true
-
         - name: prometheus
           image: prom/prometheus:v2.51.1
           ports:
