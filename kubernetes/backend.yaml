@@ -13,16 +13,16 @@ spec:
         app: backend
     spec:
       containers:
-      - name: backend
-        image: javfg/k8s-simple-backend:latest
-        ports:
-          - containerPort: 8080
-        envFrom:
-          - configMapRef:
-              name: env-vars
-          - secretRef:
-              name: db-secret
-        imagePullPolicy: Always
+        - name: backend
+          image: javfg/k8s-simple-backend:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: env-vars
+            - secretRef:
+                name: db-secret
+          imagePullPolicy: Always
 
 ---
 

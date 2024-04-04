@@ -13,13 +13,13 @@ spec:
         app: frontend
     spec:
       containers:
-      - name: frontend
-        image: nginx:latest
-        ports:
-          - containerPort: 8080
-        volumeMounts:
-          - name: frontend-volume
-            mountPath: /usr/share/nginx/html
+        - name: frontend
+          image: nginx:latest
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: frontend-volume
+              mountPath: /usr/share/nginx/html
       volumes:
         - name: frontend-volume
           persistentVolumeClaim:
