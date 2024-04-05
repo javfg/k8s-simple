@@ -21,7 +21,7 @@ spec:
             - --watched-dir=/etc/config
             - --reload-url=http://127.0.0.1:9090/-/reload
           volumeMounts:
-            - name: config
+            - name: prometheus-config
               mountPath: /etc/config
               readOnly: true
         - name: prometheus
@@ -29,13 +29,17 @@ spec:
           ports:
             - containerPort: 9090
           volumeMounts:
-            - name: config
+            - name: prometheus-config
               mountPath: /etc/prometheus
-
       volumes:
-        - name: config
+        - name: prometheus-config
           configMap:
-            name: prometheus-server-conf
+            name: prometheus-configmap
+            items:
+              - key: prometheus.yml
+                path: prometheus.yml
+              - key: example.alert
+                path: alerts/example.alert
 
 ---
 
