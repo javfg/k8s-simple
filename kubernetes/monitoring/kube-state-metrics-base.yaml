@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: kube-state-metrics
-  namespace: monitoring
+  namespace: kube-system
 
 ---
 
@@ -149,6 +149,6 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: kube-state-metrics
-    namespace: monitoring
+    namespace: kube-system
 
 ---
