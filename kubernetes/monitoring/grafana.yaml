@@ -33,10 +33,27 @@ spec:
           volumeMounts:
             - mountPath: /var/lib/grafana
               name: grafana-pv
+            - mountPath: /etc/grafana
+              name: grafana-config
+            - mountPath: /var/lib/grafana/dashboards
+              name: grafana-dashboards
       volumes:
         - name: grafana-pv
           persistentVolumeClaim:
             claimName: grafana-pvc
+        - name: grafana-config
+          configMap:
+            name: grafana-configmap
+            items:
+              - key: grafana.ini
+                path: grafana.ini
+              - key: datasource-prometheus.yaml
+                path: provisioning/datasources/datasource-prometheus.yaml
+              - key: dashboard-kube-state-metrics.yaml
+                path: provisioning/dashboards/dashboard-kube-state-metrics.yaml
+        - name: grafana-dashboards
+          configMap:
+            name: grafana-dashboards-configmap
 
 ---
 apiVersion: v1
