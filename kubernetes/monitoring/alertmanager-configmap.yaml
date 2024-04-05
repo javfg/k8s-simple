@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-configmap
+  namespace: monitoring
+data:
+  config.yml: |-
+    global:
+    templates:
+      - '/etc/alertmanager/*.tmpl'
+    route:
+      receiver: slack
+
+    receivers:
+      - name: alert-emailer
+        email_configs:
+          - to: jferrer@ebi.ac.uk
+            send_resolved: false
+            from: simple-k8s@ebi.ac.uk
+            smarthost: some-smtp-server:25
+            require_tls: false
+      - name: slack
+        slack_configs:
+          - send_resolved: true
+            channel: '#k8s-simple-alerts'
+            api_url: 'https://hooks.slack.com/services/XXXXXXXXX/XXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXX'
