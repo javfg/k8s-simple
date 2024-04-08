@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/zerolog"
 )
 
 // Info represents the contents of a response.
@@ -53,6 +53,9 @@ var (
 )
 
 func main() {
+	l := zerolog.New(os.Stdout).With().Timestamp().Logger()
+
+	l.Info().Msg("starting server")
 	c := Config{
 		Host:       os.Getenv("HOSTNAME"),
 		DBHost:     os.Getenv("DB_HOST"),
@@ -67,42 +70,48 @@ func main() {
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 		// Handle the request
-		handleHi(w, r, c)
+		handleHi(w, r, c, l)
 	})
 
 	http.Handle("/metrics", promhttp.Handler())
 
 	fmt.Printf("Server is running on port 8080, env vars: %+v\n", c)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	l.Fatal().Err(http.ListenAndServe(":8080", nil)).Send()
 }
 
-func handleHi(w http.ResponseWriter, r *http.Request, c Config) {
-	log.Printf("%s - %s: %s\n", r.Method, r.RemoteAddr, r.URL.Path)
+func handleHi(w http.ResponseWriter, r *http.Request, c Config, l zerolog.Logger) {
+	l.Info().Msgf("%s - %s: %s", r.Method, r.RemoteAddr, r.URL.Path)
+
 	requestsTotal.Inc()
 
 	// Handle OPTIONS requests
 	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
 		requestsOptions.Inc()
+		w.WriteHeader(http.StatusOK)
+		l.Info().Msg("OPTIONS request success")
 		return
 	}
 
 	requestsGet.Inc()
-
-	ctx := r.Context()
-	dbString := queryDBString(ctx, c)
+	dbString, err := queryDBString(r.Context(), c)
+	if err != nil {
+		l.Error().Err(err).Msg("query db fail")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	response := Response{
 		Message: "OK",
 		Info: Info{
-			DBString: dbString,
+			DBString: *dbString,
 			Hostname: c.Host,
 		},
 	}
 
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		l.Error().Err(err).Msg("marshal response fail")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -110,19 +119,15 @@ func handleHi(w http.ResponseWriter, r *http.Request, c Config) {
 	w.Write(jsonResponse)
 }
 
-func queryDBString(ctx context.Context, c Config) string {
+func queryDBString(ctx context.Context, c Config) (*string, error) {
 	conn, err := pgx.Connect(ctx, fmt.Sprintf("postgresql://%s:%s@%s:5432/mydb", c.DBUsername, c.DBPassword, c.DBHost))
-
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	defer conn.Close(ctx)
 
-	var dbString string
-	err = conn.QueryRow(context.Background(), "SELECT message FROM mytable LIMIT 1").Scan(&dbString)
-	if err != nil {
-		log.Fatal(err)
-	}
+	var dbString *string
+	err = conn.QueryRow(context.Background(), "SELECT message FROM mytable LIMIT 1").Scan(dbString)
 
-	return dbString
+	return dbString, err
 }
